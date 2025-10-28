@@ -51,6 +51,40 @@ func (g *Game) getPossibleActions() []Action {
 	return possibleActions
 }
 
+func (g *Game) hasGameCompleted() {
+	completedBoardStates := [][3]int{
+		// Rows
+		{0, 1, 2}, {3, 4, 5}, {6, 7, 8},
+		// Columns
+		{0, 3, 6}, {1, 4, 7}, {2, 5, 8},
+		// Diagnols
+		{0, 4, 8}, {2, 4, 6},
+	}
+
+	for _, completedBoard := range completedBoardStates {
+		if g.Board[completedBoard[0]] == g.Board[completedBoard[1]] && g.Board[completedBoard[1]] == g.Board[completedBoard[2]] {
+			g.IsGameOver = true
+			winningSymbol := g.Board[completedBoard[0]]
+			for playerId, symbol := range g.PlayerSymbolMapping {
+				if symbol == winningSymbol {
+					g.WinnerPlayer = playerId
+				}
+			} 
+		}
+	}
+
+	// check for draw
+	for _, box := range g.Board {
+		if box == noSymbol {
+			return
+		}
+	}
+
+	// board is full
+	g.IsGameOver = true
+	g.WinnerPlayer = -1
+}
+
 func (g *Game) Serialize() ([]byte, error) {
 	bytes, err := json.Marshal(g)
 	return bytes, err
