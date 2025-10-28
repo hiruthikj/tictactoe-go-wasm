@@ -2,13 +2,22 @@ package game
 
 import "encoding/json"
 
-type boxState int
+type boxSymbol int
 
 const (
-	emptyBox boxState = iota
-	x
-	o
+	noSymbol boxSymbol = iota
+	xSymbol
+	oSymbol
 )
+
+func (b boxSymbol) String() string {
+	mapping := map[boxSymbol]string{
+		noSymbol: "",
+		xSymbol: "X",
+		oSymbol: "O",
+	}
+	return mapping[b]
+}
 
 type Action struct {
 	Player   int
@@ -17,13 +26,14 @@ type Action struct {
 
 type Game struct {
 	// State
-	Board           [9]boxState         `json:"board"`
-	SymbolMapping   map[boxState]string `json:"symbolMapping"`
-	CurrentPlayerId int                 `json:"currentPlayer"`
+	Board               [9]boxSymbol         `json:"board"`
+	PlayerSymbolMapping map[int]boxSymbol `json:"playerSymbolMapping"`
+	CurrentPlayerId     int                 `json:"currentPlayer"`
 	// Events
 	PossibleActions []Action `json:"possibleActions"`
 	// Store
-	IsGameOver bool `json:"isGameOver"`
+	IsGameOver   bool `json:"isGameOver"`
+	WinnerPlayer int  `json:"winnerPlayer"`
 }
 
 func (g *Game) getPossibleActions() []Action {
@@ -33,7 +43,7 @@ func (g *Game) getPossibleActions() []Action {
 
 	possibleActions := []Action{}
 	for i := 0; i < 9; i++ {
-		if g.Board[i] == emptyBox {
+		if g.Board[i] == noSymbol {
 			action := Action{Player: g.CurrentPlayerId, Position: i}
 			possibleActions = append(possibleActions, action)
 		}
@@ -48,11 +58,10 @@ func (g *Game) Serialize() ([]byte, error) {
 
 func NewGame() *Game {
 	g := Game{
-		Board: [9]boxState{},
-		SymbolMapping: map[boxState]string{
-			emptyBox: "",
-			x:        "X",
-			o:        "O",
+		Board: [9]boxSymbol{},
+		PlayerSymbolMapping: map[int]boxSymbol{
+			0: xSymbol,
+			1: oSymbol,
 		},
 		CurrentPlayerId: 0,
 		IsGameOver:      false,
