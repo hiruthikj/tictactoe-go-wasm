@@ -3,6 +3,7 @@ package game
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 )
 
 type boxSymbol int
@@ -16,8 +17,8 @@ const (
 func (b boxSymbol) String() string {
 	mapping := map[boxSymbol]string{
 		noSymbol: "",
-		xSymbol: "X",
-		oSymbol: "O",
+		xSymbol:  "X",
+		oSymbol:  "O",
 	}
 	return mapping[b]
 }
@@ -56,16 +57,14 @@ func (a *Action) Run(g *Game) error {
 	playerSymbol := g.PlayerSymbolMapping[a.Player]
 	g.Board[a.Position] = playerSymbol
 
-	g.checkGameCompleted()
-
 	return nil
 }
 
 type Game struct {
 	// State
-	Board               [9]boxSymbol         `json:"board"`
+	Board               [9]boxSymbol      `json:"board"`
 	PlayerSymbolMapping map[int]boxSymbol `json:"playerSymbolMapping"`
-	CurrentPlayerId     int                 `json:"currentPlayer"`
+	CurrentPlayerId     int               `json:"currentPlayer"`
 	// Events
 	PossibleActions []Action `json:"possibleActions"`
 	// Store
@@ -106,7 +105,7 @@ func (g *Game) checkGameCompleted() {
 				if symbol == winningSymbol {
 					g.WinnerPlayer = playerId
 				}
-			} 
+			}
 		}
 	}
 
@@ -120,6 +119,31 @@ func (g *Game) checkGameCompleted() {
 	// board is full
 	g.IsGameOver = true
 	g.WinnerPlayer = -1
+}
+
+func (g *Game) makeMove(a Actionable) error {
+	if a == nil {
+		return errors.New("action is nil")
+	}
+
+	if g.IsGameOver {
+		return errors.New("game is already over")
+	}
+
+	err := a.Run(g)
+	if err != nil {
+		return fmt.Errorf("game move failed: %w", err)
+	}
+
+	// Game routine stuff
+	g.checkGameCompleted()
+
+	if !g.IsGameOver {
+		g.CurrentPlayerId = g.CurrentPlayerId ^ 1
+		g.PossibleActions = g.getPossibleActions()
+	}
+
+	return nil
 }
 
 func (g *Game) Serialize() ([]byte, error) {
