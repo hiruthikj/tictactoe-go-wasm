@@ -1,6 +1,9 @@
 package game
 
-import "encoding/json"
+import (
+	"encoding/json"
+	"errors"
+)
 
 type boxSymbol int
 
@@ -22,6 +25,40 @@ func (b boxSymbol) String() string {
 type Action struct {
 	Player   int
 	Position int
+}
+
+type Actionable interface {
+	IsPossible(g *Game) bool
+	Run(g *Game) error
+}
+
+func (a *Action) IsPossible(g *Game) bool {
+	if g.CurrentPlayerId != a.Player {
+		return false
+	}
+
+	if a.Position < 0 || a.Position >= 9 {
+		return false
+	}
+
+	return g.Board[a.Position] == noSymbol
+}
+
+func (a *Action) Run(g *Game) error {
+	if !a.IsPossible(g) {
+		return errors.New("move is not possible")
+	}
+
+	if g.IsGameOver {
+		return errors.New("game is already over")
+	}
+
+	playerSymbol := g.PlayerSymbolMapping[a.Player]
+	g.Board[a.Position] = playerSymbol
+
+	g.checkGameCompleted()
+
+	return nil
 }
 
 type Game struct {
