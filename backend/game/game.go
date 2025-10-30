@@ -51,7 +51,7 @@ func (g *Game) getPossibleActions() []Action {
 	return possibleActions
 }
 
-func (g *Game) hasGameCompleted() {
+func (g *Game) checkGameCompleted() {
 	completedBoardStates := [][3]int{
 		// Rows
 		{0, 1, 2}, {3, 4, 5}, {6, 7, 8},
